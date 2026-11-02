@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: car-info
+resources:
+  - ../../base
+  - backups-nfs.yaml
+  - ingress.yaml
+images:
+  - name: ghcr.io/krymancer/car-info
+    newTag: latest
+# Optional password (recommended if the ingress is reachable outside your LAN):
+#   kubectl -n car-info create secret generic car-info-secrets --from-literal=APP_PASSWORD=...

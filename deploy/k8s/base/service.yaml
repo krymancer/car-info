@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: car-info
+spec:
+  selector: { app: car-info }
+  ports: [{ port: 80, targetPort: http, name: http }]

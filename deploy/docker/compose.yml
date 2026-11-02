@@ -1,0 +1,12 @@
+# Local/full-stack run: `docker compose -f deploy/docker/compose.yml up --build`
+services:
+  car-info:
+    build: { context: ../.., dockerfile: deploy/docker/Dockerfile }
+    environment:
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      BACKUP_KEEP: "30"
+    volumes: [data:/data]
+    ports: ["8080:8080"]
+    restart: unless-stopped
+volumes:
+  data: {}

@@ -1,0 +1,25 @@
+# Daily SQLite snapshots and attachment copies go to the NAS, so they survive losing the node.
+# Static NFS bind; the dummy storageClassName stops k3s from handing out local-path instead.
+# The folder must exist on the NAS and be writable by uid 1000 (the image's `bun` user).
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: car-info-nas-backups
+spec:
+  capacity: { storage: 10Gi }
+  accessModes: [ReadWriteMany]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: nfs-nas-car-info
+  nfs:
+    server: 192.168.0.11
+    path: /mnt/nas/share/data/cars
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: car-info-backups
+spec:
+  accessModes: [ReadWriteMany]
+  storageClassName: nfs-nas-car-info
+  volumeName: car-info-nas-backups
+  resources: { requests: { storage: 10Gi } }

@@ -1,0 +1,13 @@
+{
+  "name": "car-info",
+  "private": true,
+  "scripts": {
+    "postinstall": "bun install --cwd server && bun install --cwd web",
+    "dev:server": "DATA_DIR=./data bun run --cwd server dev",
+    "dev:web": "bun run --cwd web dev",
+    "test": "bun test --cwd server && bun test --cwd web src/lib",
+    "typecheck": "bun run --cwd server typecheck && cd web && bunx tsc -b",
+    "build": "bun run --cwd web build",
+    "apk": "./scripts/build-apk.sh"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+dist/
+data/
+out/
+*.sqlite
+*.sqlite-*
+.env
+*.jks
+*.keystore
