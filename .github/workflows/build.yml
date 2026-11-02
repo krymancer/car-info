@@ -90,7 +90,7 @@ jobs:
         with: { bun-version: "1.4.x" }
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21" }
-      - uses: android-actions/setup-android@v3
+      # ubuntu-latest ships the Android SDK and sets ANDROID_HOME.
       - run: bun install --cwd web --frozen-lockfile
       # Secrets ANDROID_KEYSTORE_BASE64 + ANDROID_KEYSTORE_PASSWORD keep the signature stable across builds.
       - name: Restore keystore
