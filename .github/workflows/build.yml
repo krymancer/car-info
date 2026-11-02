@@ -108,4 +108,5 @@ jobs:
         with: { name: car-info-apk, path: out/*.apk }
       - if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
-        with: { files: out/*.apk }
+        # Only signed builds; unsigned APKs (no keystore secrets) can't be installed anyway.
+        with: { files: out/car-info.apk, fail_on_unmatched_files: false }
