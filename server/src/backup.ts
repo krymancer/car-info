@@ -26,20 +26,30 @@ export function listBackups(): string[] {
   }
 }
 
-function prune() {
-  for (const old of listBackups().filter((f) => f.startsWith("daily-")).slice(KEEP)) {
-    rmSync(join(BACKUP_DIR, old), { force: true });
-  }
+/**
+ * A random tag stored in the database itself. Daily snapshot names carry it, so two instances sharing one
+ * backup folder (e.g. a staging cluster pointed at the same NAS share) never overwrite or prune each other.
+ */
+export function instanceTag(db: Database): string {
+  db.exec("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+  db.prepare("INSERT OR IGNORE INTO meta (key, value) VALUES ('instance', ?)").run(crypto.randomUUID().slice(0, 8));
+  return (db.prepare("SELECT value FROM meta WHERE key = 'instance'").get() as { value: string }).value;
+}
+
+function prune(tag: string) {
+  const mine = listBackups().filter((f) => f.startsWith("daily-") && f.endsWith(`-${tag}.sqlite`));
+  for (const old of mine.slice(KEEP)) rmSync(join(BACKUP_DIR, old), { force: true });
 }
 
 /** Takes one snapshot per day (checked hourly), keeps the newest BACKUP_KEEP, then runs `alsoBackUp` (attachments). */
 export function scheduleDailyBackups(db: Database, alsoBackUp?: () => void) {
+  const tag = instanceTag(db);
   const run = () => {
-    const name = `daily-${new Date().toISOString().slice(0, 10)}.sqlite`;
+    const name = `daily-${new Date().toISOString().slice(0, 10)}-${tag}.sqlite`;
     if (listBackups().includes(name)) return;
     try {
       snapshot(db, name);
-      prune();
+      prune(tag);
       alsoBackUp?.();
       console.log(`backup written: ${name}`);
     } catch (err) {
