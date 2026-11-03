@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ArrowLeft, FileSpreadsheet, Printer } from "lucide-react";
+import { FileSpreadsheet, Printer } from "lucide-react";
 import type { Entry, Kind } from "@/lib/api";
 import { saveBlob } from "@/lib/api";
 import { KINDS, KIND_ORDER, categoryOf, entryLabel } from "@/lib/categories";
@@ -8,6 +8,7 @@ import { date, getSettings, km, money, monthLabel, num } from "@/lib/format";
 import { useAllEntries, useVehicles, useGoBack } from "@/lib/hooks";
 import { fuelEconomy, summarize } from "@/lib/stats";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -46,16 +47,14 @@ export function ReportPage() {
   const sorted = [...scoped].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div className="mx-auto min-h-dvh max-w-4xl print:max-w-none">
-      <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background/95 px-2 pt-[env(safe-area-inset-top)] backdrop-blur print:hidden">
-        <Button variant="ghost" size="icon" aria-label="Back" onClick={() => goBack()}><ArrowLeft /></Button>
-        <h1 className="flex-1 font-heading font-semibold">Report</h1>
+    <div className="mx-auto min-h-dvh max-w-4xl lg:max-w-6xl lg:px-4 print:max-w-none">
+      <PageHeader title="Report" onBack={() => goBack()}>
         <Button variant="outline" size="sm" onClick={csv} disabled={!scoped.length}><FileSpreadsheet /> CSV</Button>
         <Button size="sm" onClick={() => print()} disabled={!scoped.length}><Printer /> PDF</Button>
-      </header>
+      </PageHeader>
 
       <div className="space-y-6 p-4">
-        <div className="grid grid-cols-2 gap-3 print:hidden">
+        <div className="grid grid-cols-2 gap-3 lg:w-md print:hidden">
           <Select value={vehicleId} onValueChange={setVehicleId}>
             <SelectTrigger className="h-10 w-full"><SelectValue /></SelectTrigger>
             <SelectContent>

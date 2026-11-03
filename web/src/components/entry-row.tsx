@@ -18,36 +18,43 @@ export function KindIcon({ entry, className = "size-11" }: { entry: Pick<Entry, 
   );
 }
 
+/** Phone: icon, label, one line of details. Desktop: the same row laid out as table columns (see `ENTRY_COLUMNS`). */
+export const ENTRY_COLUMNS = "lg:grid lg:grid-cols-[2.25rem_minmax(0,1fr)_9rem_7rem_8rem_7rem] lg:gap-4";
+
 export function EntryRow({ entry, economy }: { entry: Entry; economy?: number }) {
-  const details: string[] = [date(entry.date)];
-  if (entry.odometer != null) details.push(km(entry.odometer));
+  const extra: string[] = [];
   if (entry.kind === "fuel") {
-    if (entry.fuel_liters) details.push(`${num(entry.fuel_liters, 2)} L`);
+    if (entry.fuel_liters) extra.push(`${num(entry.fuel_liters, 2)} L`);
   } else if (entry.items.length) {
-    details.push(`${entry.items.length} part${entry.items.length > 1 ? "s" : ""}`);
+    extra.push(`${entry.items.length} part${entry.items.length > 1 ? "s" : ""}`);
   }
-  if (entry.shop) details.push(entry.shop);
+  if (entry.shop) extra.push(entry.shop);
+  const phone = [date(entry.date), entry.odometer != null && km(entry.odometer), ...extra].filter(Boolean).join(" · ");
+  const rate =
+    entry.kind === "fuel"
+      ? economy ? `${num(economy, 2)} km/L` : entry.fuel_price ? `${money(entry.fuel_price, 2)}/L` : ""
+      : "";
 
   return (
     <Link
       to={`/entry/${entry.id}`}
-      className="flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-card active:bg-card"
+      className={`flex items-center gap-3 rounded-xl p-2 transition-colors hover:bg-card active:bg-card lg:items-center lg:rounded-lg lg:py-1.5 ${ENTRY_COLUMNS}`}
     >
-      <KindIcon entry={entry} />
+      <KindIcon entry={entry} className="size-11 lg:size-9" />
       <div className="min-w-0 flex-1">
         <p className="flex items-center gap-1.5 truncate font-medium">
           {entryLabel(entry)}
           {!!entry.attachment_count && <Paperclip className="size-3.5 shrink-0 text-muted-foreground" aria-label="Has receipts" />}
         </p>
-        <p className="truncate text-xs text-muted-foreground">{details.join(" · ")}</p>
+        <p className="truncate text-xs text-muted-foreground lg:hidden">{phone}</p>
+        <p className="hidden truncate text-xs text-muted-foreground lg:block">{extra.join(" · ")}</p>
       </div>
+      <span className="hidden text-sm whitespace-nowrap text-muted-foreground tabular-nums lg:block">{date(entry.date)}</span>
+      <span className="hidden text-right text-sm text-muted-foreground tabular-nums lg:block">{entry.odometer != null ? km(entry.odometer) : ""}</span>
+      <span className="hidden text-right text-sm text-muted-foreground tabular-nums lg:block">{rate}</span>
       <div className="text-right">
         <p className="font-medium tabular-nums">{money(entry.total)}</p>
-        {entry.kind === "fuel" && (
-          <p className="text-xs text-muted-foreground tabular-nums">
-            {economy ? `${num(economy, 2)} km/L` : entry.fuel_price ? `${money(entry.fuel_price, 2)}/L` : ""}
-          </p>
-        )}
+        {rate && <p className="text-xs text-muted-foreground tabular-nums lg:hidden">{rate}</p>}
       </div>
     </Link>
   );

@@ -143,3 +143,7 @@ export {
   SheetTitle,
   SheetDescription,
 }
+
+/** Bottom sheet on the phone, side panel on desktop: pass `side={desktop ? "right" : "bottom"}`. */
+export const SIDE_SHEET =
+  "data-[side=bottom]:mx-auto data-[side=bottom]:max-h-[90dvh] data-[side=bottom]:max-w-2xl data-[side=bottom]:rounded-t-2xl data-[side=right]:w-full data-[side=right]:sm:max-w-md overflow-y-auto"

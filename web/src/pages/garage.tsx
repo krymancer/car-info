@@ -20,8 +20,8 @@ export function GaragePage() {
   if (isLoading) return <Skeleton className="h-40 w-full" />;
 
   return (
-    <div className="space-y-3">
-      {vehicles.length === 0 && <EmptyState icon={CarFront} title="Your garage is empty" />}
+    <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
+      {vehicles.length === 0 && <div className="lg:col-span-full"><EmptyState icon={CarFront} title="Your garage is empty" /></div>}
       {vehicles.map((v) => {
         const Icon = VEHICLE_ICONS[v.type] ?? CarFront;
         const subtitle = [v.make, v.model, v.year].filter(Boolean).join(" ");

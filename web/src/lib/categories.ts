@@ -45,6 +45,13 @@ export const KINDS: Record<Kind, KindInfo> = {
 };
 export const KIND_ORDER: Kind[] = ["service", "upgrade", "expense", "fuel"];
 
+export const KIND_HINT: Record<Kind, string> = {
+  service: "Repairs, oil changes, parts swapped",
+  upgrade: "Mods, accessories, improvements",
+  expense: "Taxes, insurance, fines, parking, wash",
+  fuel: "Fill-ups and fuel economy",
+};
+
 export type Category = { id: string; label: string; icon: LucideIcon };
 
 export const CATEGORIES: Record<Exclude<Kind, "fuel">, Category[]> = {

@@ -2,7 +2,7 @@
 
 # Car Info
 
-Self-hosted tracker for what your vehicles cost: maintenance (with every part, brand, part number and labor), upgrades, fuel, and paperwork (IPVA, insurance, fines). Dark mode, mobile first, with an Android app.
+Self-hosted tracker for what your vehicles cost: maintenance (with every part, brand, part number and labor), upgrades, fuel, and paperwork (IPVA, insurance, fines). Dark mode, with an Android app for the phone and a sidebar layout on laptop screens.
 
 <p>
   <img src="docs/screenshots/log.png" width="24%" alt="Log">
@@ -20,7 +20,7 @@ Self-hosted tracker for what your vehicles cost: maintenance (with every part, b
 - **Import**: Car Notes Excel exports (preview first, importing twice adds nothing).
 - **Backups**: daily SQLite snapshots plus a copy of every attachment on the server (kept 30 days), JSON export/restore and a database download in Settings.
 
-<img src="docs/screenshots/report.png" width="70%" alt="Report">
+<img src="docs/screenshots/desktop.png" width="100%" alt="Desktop layout">
 
 ## Layout
 

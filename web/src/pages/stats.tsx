@@ -34,7 +34,7 @@ export function StatsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:flex-wrap lg:px-0">
         {periods.map(([p, label]) => (
           <button
             key={p}
@@ -49,6 +49,7 @@ export function StatsPage() {
         ))}
       </div>
 
+      <div className="grid gap-4 lg:grid-cols-2">
       <div className="rounded-2xl border bg-card p-5">
         <div className="flex items-start justify-between">
           <p className="text-sm text-muted-foreground">Total spent</p>
@@ -76,6 +77,7 @@ export function StatsPage() {
           </div>
         ))}
       </div>
+      </div>
 
       {s.byMonth.length > 0 && (
         <div className="rounded-2xl border bg-card p-4">
@@ -84,6 +86,7 @@ export function StatsPage() {
         </div>
       )}
 
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:items-start">
       {s.byCategory.length > 0 && (
         <div className="rounded-2xl border bg-card p-4">
           <h2 className="mb-1 text-sm font-semibold">Where the money goes</h2>
@@ -114,6 +117,7 @@ export function StatsPage() {
         </div>
       )}
 
+      <div className="space-y-4">
       {vehicle.purchase_price != null && period === "all" && (
         <div className="rounded-2xl border bg-card p-4 text-sm">
           <div className="flex justify-between"><span className="text-muted-foreground">Purchase price</span><span className="tabular-nums">{money(vehicle.purchase_price, 0)}</span></div>
@@ -126,6 +130,8 @@ export function StatsPage() {
       <Button variant="outline" className="w-full" asChild>
         <Link to="/report"><FileText /> Full report · PDF & CSV</Link>
       </Button>
+      </div>
+      </div>
     </div>
   );
 }

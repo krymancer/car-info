@@ -311,21 +311,24 @@ export function EntryFormPage() {
             </p>
           )}
           {items.map((it) => (
-            <div key={it.key} className="space-y-3 rounded-xl border p-3">
-              <div className="flex items-end gap-2">
+            <div
+              key={it.key}
+              className="space-y-3 rounded-xl border p-3 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_4.5rem_7rem_auto] lg:items-end lg:gap-3 lg:space-y-0"
+            >
+              <div className="flex items-end gap-2 lg:contents">
                 <Field label="Part" className="flex-1" placeholder="e.g. Oil filter" value={it.name} onChange={(v) => updateItem(it.key, { name: v })} />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="mb-1"
+                  className="mb-1 lg:order-last lg:mb-0.5"
                   aria-label="Remove part"
                   onClick={() => setItems((l) => l.filter((i) => i.key !== it.key))}
                 >
                   <X />
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 lg:contents">
                 <Field label="Brand" value={it.brand} onChange={(v) => updateItem(it.key, { brand: v })} />
                 <Field label="Part number" value={it.part_number} onChange={(v) => updateItem(it.key, { part_number: v })} />
                 <Field label="Qty" numeric value={it.qty} onChange={(v) => updateItem(it.key, { qty: v })} />

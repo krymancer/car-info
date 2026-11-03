@@ -48,3 +48,16 @@ export function useGoBack() {
   const navigate = useNavigate();
   return () => ((window.history.state?.idx ?? 0) > 0 ? navigate(-1) : navigate("/", { replace: true }));
 }
+
+const DESKTOP = "(min-width: 1024px)";
+/** Laptop-sized screen: sidebar layout, side sheets instead of bottom sheets. Matches Tailwind's `lg`. */
+export function useDesktop() {
+  return useSyncExternalStore(
+    (l) => {
+      const mq = matchMedia(DESKTOP);
+      mq.addEventListener("change", l);
+      return () => mq.removeEventListener("change", l);
+    },
+    () => matchMedia(DESKTOP).matches,
+  );
+}

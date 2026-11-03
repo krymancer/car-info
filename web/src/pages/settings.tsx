@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { useGoBack } from "@/lib/hooks";
 import { useNavigate } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, DatabaseBackup, Download, FileText, LogOut, Save, Upload } from "lucide-react";
+import { DatabaseBackup, Download, FileText, LogOut, Save, Upload } from "lucide-react";
 import { Link } from "react-router";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ import { api, download, getServerUrl, isNativeApp, setServerUrl, setToken } from
 import { getSettings, quickFuelOnLaunch, reloadSettings, saveSettings, setQuickFuelOnLaunch } from "@/lib/format";
 import { Field, Section } from "@/components/field";
 import { CarNotesImport } from "@/components/carnotes-import";
+import { PageHeader } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 
 const stamp = () => new Date().toISOString().slice(0, 10);
@@ -62,11 +63,8 @@ export function SettingsPage({ canLogout }: { canLogout: boolean }) {
   };
 
   return (
-    <div className="mx-auto min-h-dvh max-w-2xl">
-      <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background/95 px-2 pt-[env(safe-area-inset-top)] backdrop-blur">
-        <Button variant="ghost" size="icon" aria-label="Back" onClick={() => goBack()}><ArrowLeft /></Button>
-        <h1 className="font-heading font-semibold">Settings</h1>
-      </header>
+    <div className="mx-auto min-h-dvh max-w-2xl lg:px-4">
+      <PageHeader title="Settings" onBack={() => goBack()} />
       <div className="space-y-4 p-4">
         <Section title="Display">
           <div className="grid grid-cols-2 gap-3">

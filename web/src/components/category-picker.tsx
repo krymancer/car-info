@@ -3,7 +3,8 @@ import { ChevronRight, Search } from "lucide-react";
 import type { Kind } from "@/lib/api";
 import { CATEGORIES, KINDS, categoryOf } from "@/lib/categories";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SIDE_SHEET, Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useDesktop } from "@/lib/hooks";
 
 export function CategoryPicker({
   kind,
@@ -16,6 +17,7 @@ export function CategoryPicker({
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
+  const desktop = useDesktop();
   const current = categoryOf(kind, value);
   const Icon = current?.icon ?? KINDS[kind].icon;
   const color = KINDS[kind].color;
@@ -41,7 +43,7 @@ export function CategoryPicker({
         <ChevronRight className="size-4 text-muted-foreground" />
       </button>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="mx-auto max-w-2xl rounded-t-2xl data-[side=bottom]:h-[85dvh]">
+        <SheetContent side={desktop ? "right" : "bottom"} className={`${SIDE_SHEET} data-[side=bottom]:h-[85dvh]`}>
           <SheetHeader><SheetTitle>Select category</SheetTitle></SheetHeader>
           <div className="relative px-4">
             <Search className="absolute top-1/2 left-7 size-4 -translate-y-1/2 text-muted-foreground" />

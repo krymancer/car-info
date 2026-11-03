@@ -4,7 +4,7 @@ import { Route, Routes, useNavigate } from "react-router";
 import { api, isNativeApp } from "@/lib/api";
 import { quickFuelOnLaunch } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shell } from "@/components/shell";
+import { AppLayout, Shell } from "@/components/shell";
 import { LoginPage } from "@/pages/login";
 import { LogPage } from "@/pages/log";
 import { EntryFormPage } from "@/pages/entry-form";
@@ -38,6 +38,7 @@ export function App() {
 
   return (
     <Routes>
+      <Route element={<AppLayout />}>
       <Route element={<Shell />}>
         <Route index element={<LogPage />} />
         <Route path="reminders" element={<RemindersPage />} />
@@ -50,6 +51,7 @@ export function App() {
       <Route path="garage/:id" element={<VehicleFormPage />} />
       <Route path="report" element={<ReportPage />} />
       <Route path="settings" element={<SettingsPage canLogout={session.data.auth_required} />} />
+      </Route>
     </Routes>
   );
 }

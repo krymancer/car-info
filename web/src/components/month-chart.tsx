@@ -58,7 +58,7 @@ export function MonthChart({ months, kinds }: { months: [string, KindTotals][]; 
               </>
             ) : null}
           </div>
-          <div className="relative h-44" onMouseLeave={() => setActive(null)}>
+          <div className="relative h-44 lg:h-64" onMouseLeave={() => setActive(null)}>
             {[1, 0.5].map((f) => (
               <div key={f} className="pointer-events-none absolute inset-x-0 border-t border-border/60" style={{ bottom: `${f * 100}%` }}>
                 <span className="absolute -top-2 left-0 bg-card pr-1 text-[10px] text-muted-foreground">{money(max * f, 0)}</span>

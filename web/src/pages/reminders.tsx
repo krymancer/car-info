@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { api, type Reminder } from "@/lib/api";
 import { CATEGORIES, categoryOf } from "@/lib/categories";
 import { date, km, num, parseNum, today } from "@/lib/format";
-import { useCurrentVehicle, useEntries, useReminders } from "@/lib/hooks";
+import { useCurrentVehicle, useDesktop, useEntries, useReminders } from "@/lib/hooks";
 import { currentOdometer, reminderStatus, type ReminderStatus } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { EmptyState, Fab } from "@/components/shell";
@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { SIDE_SHEET, Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 const STATE = {
   overdue: { label: "Overdue", icon: AlertTriangle, bar: "bg-destructive", text: "text-destructive" },
@@ -57,13 +57,13 @@ export function RemindersPage() {
   if (!vehicle) return <EmptyState icon={Bell} title="Add a vehicle first" />;
 
   return (
-    <div className="space-y-3">
-      {odo != null && <p className="px-1 text-sm text-muted-foreground">Current odometer: {km(odo)}</p>}
+    <div className="grid gap-3 lg:grid-cols-2 lg:items-start">
+      {odo != null && <p className="px-1 text-sm text-muted-foreground lg:col-span-2">Current odometer: {km(odo)}</p>}
       {rows.length === 0 ? (
-        <EmptyState icon={Bell} title="No reminders">
+        <div className="lg:col-span-2"><EmptyState icon={Bell} title="No reminders">
           Track timing belts, oil changes, insurance renewals by km or time. Logging a service in the same category
           resets the reminder automatically.
-        </EmptyState>
+        </EmptyState></div>
       ) : (
         rows.map(({ r, s }) => {
           const st = STATE[s.state];
@@ -114,6 +114,7 @@ export function RemindersPage() {
 
 function ReminderSheet({ vehicleId, reminder, onClose }: { vehicleId: string; reminder: Reminder | null; onClose: () => void }) {
   const qc = useQueryClient();
+  const desktop = useDesktop();
   const [title, setTitle] = useState(reminder?.title ?? "");
   const [category, setCategory] = useState(reminder?.category ?? "none");
   const [intervalKm, setIntervalKm] = useState(reminder?.interval_km?.toString() ?? "");
@@ -147,7 +148,7 @@ function ReminderSheet({ vehicleId, reminder, onClose }: { vehicleId: string; re
 
   return (
     <Sheet open onOpenChange={(o) => !o && onClose()}>
-      <SheetContent side="bottom" className="mx-auto max-h-[90dvh] max-w-2xl overflow-y-auto rounded-t-2xl">
+      <SheetContent side={desktop ? "right" : "bottom"} className={SIDE_SHEET}>
         <SheetHeader><SheetTitle>{reminder ? "Edit reminder" : "New reminder"}</SheetTitle></SheetHeader>
         <form
           className="space-y-4 px-4"
