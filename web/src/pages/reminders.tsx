@@ -6,7 +6,7 @@ import { api, type Reminder } from "@/lib/api";
 import { CATEGORIES, categoryOf } from "@/lib/categories";
 import { date, km, num, parseNum, parseWhole, today } from "@/lib/format";
 import { useCurrentVehicle, useDesktop, useEntries, useReminders } from "@/lib/hooks";
-import { currentOdometer, reminderStatus, type ReminderStatus } from "@/lib/stats";
+import { currentOdometer, odometerSwaps, reminderStatus, type ReminderStatus } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { EmptyState, Fab } from "@/components/shell";
 import { KindIcon } from "@/components/entry-row";
@@ -45,13 +45,12 @@ export function RemindersPage() {
     () => currentOdometer(entries.data ?? [], vehicle?.purchase_odometer),
     [entries.data, vehicle?.purchase_odometer],
   );
-  const rows = useMemo(
-    () =>
-      (reminders.data ?? [])
-        .map((r) => ({ r, s: reminderStatus(r, odo, today()) }))
-        .sort((a, b) => b.s.progress - a.s.progress),
-    [reminders.data, odo],
-  );
+  const rows = useMemo(() => {
+    const swaps = odometerSwaps(entries.data ?? []);
+    return (reminders.data ?? [])
+      .map((r) => ({ r, s: reminderStatus(r, odo, today(), swaps) }))
+      .sort((a, b) => b.s.progress - a.s.progress);
+  }, [reminders.data, entries.data, odo]);
 
   if (isLoading || reminders.isLoading) return <Skeleton className="h-40 w-full" />;
   if (!vehicle) return <EmptyState icon={Bell} title="Add a vehicle first" />;

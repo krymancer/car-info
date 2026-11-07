@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import type { Entry, Reminder } from "./api";
-import { addMonths, fillMonths, fuelEconomy, inPeriod, reminderStatus, summarize } from "./stats";
+import { addMonths, currentOdometer, estimateSwap, fillMonths, fuelEconomy, inPeriod, odometerSwaps, reminderStatus, summarize } from "./stats";
 
 let n = 0;
 const entry = (p: Partial<Entry>): Entry => ({
@@ -66,5 +66,47 @@ describe("stats", () => {
     expect(Math.round(st.progress * 100)).toBe(38);
     expect(st.state).toBe("ok");
     expect(addMonths("2026-01-31", 1)).toBe("2026-02-28");
+  });
+});
+
+describe("odometer swap", () => {
+  // Old cluster read 10,000 -> 10,300; the replacement came in at 50,000.
+  const log = () => [
+    entry({ kind: "fuel", date: "2026-01-01", odometer: 10_000, fuel_liters: 30, full_tank: 1, total: 100 }),
+    entry({ kind: "fuel", date: "2026-02-01", odometer: 10_300, fuel_liters: 30, full_tank: 1, total: 100 }),
+    entry({ kind: "service", date: "2026-02-10", odometer: 10_400, odometer_after: 50_000, total: 300 }),
+    entry({ kind: "fuel", date: "2026-03-01", odometer: 50_200, fuel_liters: 30, full_tank: 1, total: 100 }),
+  ];
+
+  test("distance and cost per km count only km driven", () => {
+    const s = summarize(log());
+    expect(s.distance).toBe(600); // 10,000 -> 10,400 on the old cluster, 50,000 -> 50,200 on the new
+    expect(s.costPerKm).toBe(1);
+  });
+
+  test("fuel economy bridges the swap", () => {
+    expect(fuelEconomy(log()).average).toBe(10); // 300 km before + 300 km across the swap, 60 L
+  });
+
+  test("current odometer is what the new cluster shows", () => {
+    expect(currentOdometer(log(), 9_000)).toBe(50_200);
+    expect(currentOdometer(log().slice(0, 3))).toBe(50_000);
+  });
+
+  test("a service logged on the old cluster still counts for reminders", () => {
+    const r = {
+      id: "r", vehicle_id: "v", title: "Oil", category: "oil", interval_km: 1_000, interval_months: null,
+      last_date: null, last_odometer: null, notes: null,
+      effective_last_date: "2026-01-15", effective_last_odometer: 10_100,
+    } as Reminder;
+    const swaps = odometerSwaps(log());
+    expect(reminderStatus(r, 50_200, "2026-03-01", swaps).kmLeft).toBe(10_100 + 39_600 + 1_000 - 50_200);
+  });
+
+  test("estimates both readings from the pace before the swap", () => {
+    const fills = log().filter((e) => e.odometer_after == null);
+    // 300 km in 31 days before; swap 9 days after the last old reading, 19 days before the next.
+    expect(estimateSwap(fills, "2026-02-10")).toEqual({ before: 10_387, after: 50_016 });
+    expect(estimateSwap(fills, "2025-12-01")).toBeNull();
   });
 });

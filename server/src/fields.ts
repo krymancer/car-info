@@ -25,6 +25,7 @@ export const entryFields: Spec = {
   title: "text",
   date: "date",
   odometer: "int",
+  odometer_after: "int",
   total: "real",
   labor: "real",
   shop: "text",

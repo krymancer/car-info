@@ -34,6 +34,9 @@ CREATE TABLE IF NOT EXISTS entries (
   title TEXT,
   date TEXT NOT NULL,
   odometer INTEGER,
+  -- Set when the odometer/instrument cluster was replaced: odometer is the old unit's last reading,
+  -- odometer_after the new unit's first one. Stats bridge the gap between the two.
+  odometer_after INTEGER,
   total REAL NOT NULL DEFAULT 0,
   labor REAL,
   shop TEXT,
@@ -98,7 +101,15 @@ export function openDb(path = `${DATA_DIR}/car-info.sqlite`): Database {
   const db = new Database(path, { create: true, strict: true });
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;");
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/** Columns added after the first release; CREATE TABLE IF NOT EXISTS leaves old tables alone. */
+function migrate(db: Database) {
+  const has = (table: string, column: string) =>
+    (db.prepare(`PRAGMA table_info(${table})`).all() as { name: string }[]).some((c) => c.name === column);
+  if (!has("entries", "odometer_after")) db.exec("ALTER TABLE entries ADD COLUMN odometer_after INTEGER");
 }
 
 export const now = () => new Date().toISOString();

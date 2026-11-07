@@ -5,7 +5,7 @@ import type { Entry, Kind, Vehicle } from "@/lib/api";
 import { KINDS, KIND_HINT, KIND_ORDER, entryLabel } from "@/lib/categories";
 import { date, km, money, monthLabel, num, today } from "@/lib/format";
 import { useCurrentVehicle, useEntries, useReminders } from "@/lib/hooks";
-import { currentOdometer, fuelEconomy, reminderStatus, summarize } from "@/lib/stats";
+import { currentOdometer, fuelEconomy, odometerSwaps, reminderStatus, summarize } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { ENTRY_COLUMNS, EntryRow, PendingRow } from "@/components/entry-row";
 import { discard, useOutbox } from "@/lib/outbox";
@@ -184,8 +184,9 @@ function LogSidebar({ vehicle, entries }: { vehicle: Vehicle; entries: Entry[] }
   const s = useMemo(() => summarize(entries.filter((e) => e.date.startsWith(year))), [entries, year]);
   const odo = currentOdometer(entries, vehicle.purchase_odometer);
   const economy = useMemo(() => fuelEconomy(entries).average, [entries]);
+  const swaps = odometerSwaps(entries);
   const due = (reminders.data ?? [])
-    .map((r) => ({ r, s: reminderStatus(r, odo, today()) }))
+    .map((r) => ({ r, s: reminderStatus(r, odo, today(), swaps) }))
     .filter((x) => x.s.state === "overdue" || x.s.state === "soon")
     .sort((a, b) => b.s.progress - a.s.progress)
     .slice(0, 4);

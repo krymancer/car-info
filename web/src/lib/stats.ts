@@ -14,10 +14,65 @@ export function inPeriod(entries: Entry[], period: Period, todayIso: string): En
   return entries.filter((e) => e.date.startsWith(period));
 }
 
+/** An odometer/instrument cluster replacement: the old unit's last reading and the new one's first. */
+export type OdometerSwap = { date: string; before: number; after: number };
+
+export function odometerSwaps(entries: Entry[]): OdometerSwap[] {
+  return entries
+    .filter((e) => e.odometer != null && e.odometer_after != null)
+    .map((e) => ({ date: e.date, before: e.odometer!, after: e.odometer_after! }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Moves a reading taken on `date` onto the scale of the odometer installed now, so distances across
+ * a swap are the km actually driven. A reading on the swap day itself belongs to whichever unit it is
+ * closer to. Pass an empty date for readings that predate every record (purchase odometer).
+ */
+export function onCurrentScale(swaps: OdometerSwap[], date: string, reading: number): number {
+  let r = reading;
+  for (const s of swaps) {
+    const before = date < s.date || (date === s.date && Math.abs(r - s.before) < Math.abs(r - s.after));
+    if (before) r += s.after - s.before;
+  }
+  return r;
+}
+
+/** The same entries with every odometer reading on the current unit's scale. */
+export function continuousOdometer(entries: Entry[]): Entry[] {
+  const swaps = odometerSwaps(entries);
+  if (!swaps.length) return entries;
+  return entries.map((e) =>
+    e.odometer == null ? e : { ...e, odometer: onCurrentScale(swaps, e.date, e.odometer) },
+  );
+}
+
+/**
+ * Guesses both readings for a swap on `date` from the readings around it, assuming the car kept its
+ * usual pace (km/day over the old unit's history) through the gap. Null without a reading on each side.
+ */
+export function estimateSwap(entries: Entry[], date: string, ignoreId?: string): { before: number; after: number } | null {
+  const readings = continuousOdometer(entries.filter((e) => e.id !== ignoreId && e.odometer_after == null))
+    .filter((e) => e.odometer != null)
+    .sort((a, b) => a.date.localeCompare(b.date) || a.odometer! - b.odometer!);
+  const prior = readings.filter((e) => e.date < date);
+  const next = readings.find((e) => e.date > date);
+  const prev = prior.at(-1);
+  if (!prev || !next) return null;
+  const first = prior[0];
+  const span = daysBetween(first.date, prev.date);
+  const perDay = span > 0 ? Math.max(0, (prev.odometer! - first.odometer!) / span) : 0;
+  return {
+    before: Math.round(prev.odometer! + perDay * daysBetween(prev.date, date)),
+    after: Math.round(next.odometer! - perDay * daysBetween(date, next.date)),
+  };
+}
+
 export type KindTotals = Record<Kind, number>;
 const zero = (): KindTotals => ({ service: 0, upgrade: 0, expense: 0, fuel: 0 });
 
-export function summarize(entries: Entry[]) {
+export function summarize(all: Entry[]) {
+  const entries = continuousOdometer(all);
   const byKind = zero();
   const byCategory = new Map<string, { kind: Kind; category: string | null; total: number; count: number }>();
   const byMonth = new Map<string, KindTotals>();
@@ -83,7 +138,7 @@ export function fillMonths(months: [string, KindTotals][]): [string, KindTotals]
  * logged without an odometer). Physically impossible segments (bad odometer typos) are ignored.
  */
 export function fuelEconomy(entries: Entry[]) {
-  const fills = entries
+  const fills = continuousOdometer(entries)
     .filter((e) => e.kind === "fuel")
     .sort((a, b) => a.date.localeCompare(b.date) || (a.odometer ?? 0) - (b.odometer ?? 0));
   const perEntry = new Map<string, number>(); // entry id -> km/L
@@ -110,9 +165,10 @@ export function fuelEconomy(entries: Entry[]) {
 }
 const MAX_KM_PER_L = 80;
 
+/** The reading the dashboard shows now, given `base` (purchase odometer) for a vehicle with no records. */
 export function currentOdometer(entries: Entry[], base?: number | null): number | null {
-  const odos = entries.map((e) => e.odometer).filter((o): o is number => o != null);
-  if (base != null) odos.push(base);
+  const odos = continuousOdometer(entries).map((e) => e.odometer).filter((o): o is number => o != null);
+  if (base != null) odos.push(onCurrentScale(odometerSwaps(entries), "", base));
   return odos.length ? Math.max(...odos) : null;
 }
 
@@ -124,8 +180,9 @@ export function addMonths(iso: string, months: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-const daysBetween = (a: string, b: string) =>
-  Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86_400_000);
+function daysBetween(a: string, b: string) {
+  return Math.round((Date.parse(`${b}T12:00:00`) - Date.parse(`${a}T12:00:00`)) / 86_400_000);
+}
 
 export type ReminderStatus = {
   progress: number; // 0..1+, whichever of km/time is further along
@@ -136,8 +193,12 @@ export type ReminderStatus = {
   state: "ok" | "soon" | "overdue" | "unknown";
 };
 
-export function reminderStatus(r: Reminder, odometer: number | null, todayIso: string): ReminderStatus {
-  const lastOdo = r.effective_last_odometer;
+/** `swaps`: the vehicle's odometer swaps, so a service logged on the old unit still counts. */
+export function reminderStatus(r: Reminder, odometer: number | null, todayIso: string, swaps: OdometerSwap[] = []): ReminderStatus {
+  const lastOdo =
+    r.effective_last_odometer != null && swaps.length
+      ? onCurrentScale(swaps, r.effective_last_date ?? "", r.effective_last_odometer)
+      : r.effective_last_odometer;
   const lastDate = r.effective_last_date;
   const dueKm = r.interval_km && lastOdo != null ? lastOdo + r.interval_km : null;
   const dueDate = r.interval_months && lastDate ? addMonths(lastDate, r.interval_months) : null;

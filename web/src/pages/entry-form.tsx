@@ -8,7 +8,7 @@ import { createEntry } from "@/lib/outbox";
 import { FUEL_TYPES, KINDS, KIND_ORDER } from "@/lib/categories";
 import { km, money, parseNum, parseWhole, today } from "@/lib/format";
 import { useCurrentVehicle, useEntries, useGoBack } from "@/lib/hooks";
-import { currentOdometer } from "@/lib/stats";
+import { currentOdometer, estimateSwap } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 import { FormScreen } from "@/components/shell";
 import { Attachments, uploadFile } from "@/components/attachments";
@@ -56,6 +56,8 @@ export function EntryFormPage() {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [odometer, setOdometer] = useState("");
+  const [swapped, setSwapped] = useState(false);
+  const [odometerAfter, setOdometerAfter] = useState("");
   const [total, setTotal] = useState("");
   const [labor, setLabor] = useState("");
   const [shop, setShop] = useState("");
@@ -91,6 +93,8 @@ export function EntryFormPage() {
     setTitle(e.title ?? "");
     setDate(e.date);
     setOdometer(str(e.odometer));
+    setSwapped(e.odometer_after != null);
+    setOdometerAfter(str(e.odometer_after));
     setTotal(str(e.total));
     setLabor(str(e.labor));
     setShop(e.shop ?? "");
@@ -127,6 +131,23 @@ export function EntryFormPage() {
     setLiters(values.fuel_liters);
   };
 
+  // Odometer / instrument cluster replaced: record the old unit's last reading and the new one's first.
+  const canSwap = kind === "service";
+  const estimate = useMemo(
+    () => (canSwap && swapped ? estimateSwap(entries.data ?? [], date, id) : null),
+    [canSwap, swapped, entries.data, date, id],
+  );
+  const toggleSwap = (on: boolean) => {
+    setSwapped(on);
+    if (on && !odometer && !odometerAfter) {
+      const guess = estimateSwap(entries.data ?? [], date, id);
+      if (guess) {
+        setOdometer(String(guess.before));
+        setOdometerAfter(String(guess.after));
+      }
+    }
+  };
+
   const hasParts = kind !== "fuel" && kind !== "expense" && items.length > 0;
   const partsSum = items.reduce((s, i) => s + (parseNum(i.qty) ?? 0) * (parseNum(i.unit_price) ?? 0), 0);
   const computedTotal = hasParts ? partsSum + (parseNum(labor) ?? 0) : parseNum(total) ?? 0;
@@ -146,6 +167,7 @@ export function EntryFormPage() {
         title,
         date,
         odometer: parseWhole(odometer),
+        odometer_after: canSwap && swapped ? parseWhole(odometerAfter) : null,
         total: hasParts ? computedTotal : parseNum(total),
         labor: kind === "service" || kind === "upgrade" ? parseNum(labor) : null,
         shop,
@@ -259,15 +281,54 @@ export function EntryFormPage() {
         <div className="grid grid-cols-2 gap-3">
           <Field label="Date" type="date" value={date} onChange={setDate} />
           <Field
-            label="Odometer"
+            label={canSwap && swapped ? "Old odometer" : "Odometer"}
             integer
             suffix="km"
             value={odometer}
             onChange={setOdometer}
             placeholder={lastOdo != null ? String(lastOdo) : ""}
-            hint={lastOdo != null && `Last: ${km(lastOdo)}`}
+            hint={canSwap && swapped ? "Its last reading" : lastOdo != null && `Last: ${km(lastOdo)}`}
           />
         </div>
+        {canSwap && (
+          <label className="flex items-center justify-between gap-4">
+            <span className="text-sm">
+              Odometer replaced
+              <span className="block text-xs text-muted-foreground">
+                New instrument cluster. Stats count only the km driven across the swap.
+              </span>
+            </span>
+            <Switch checked={swapped} onCheckedChange={toggleSwap} />
+          </label>
+        )}
+        {canSwap && swapped && (
+          <div className="grid grid-cols-2 items-start gap-3">
+            <Field
+              label="New odometer"
+              integer
+              suffix="km"
+              value={odometerAfter}
+              onChange={setOdometerAfter}
+              hint="Its first reading"
+            />
+            {estimate && (
+              <div className="space-y-1.5 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-10 w-full"
+                  onClick={() => {
+                    setOdometer(String(estimate.before));
+                    setOdometerAfter(String(estimate.after));
+                  }}
+                >
+                  Estimate both
+                </Button>
+                <p className="text-xs text-muted-foreground">From the readings around this date</p>
+              </div>
+            )}
+          </div>
+        )}
       </Section>
 
       {kind === "fuel" && (

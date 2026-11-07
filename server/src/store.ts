@@ -102,7 +102,9 @@ export function createStore(db: Database) {
     listVehicles() {
       return db
         .prepare(
-          `SELECT v.*, (SELECT MAX(odometer) FROM entries e WHERE e.vehicle_id = v.id) AS last_odometer
+          `SELECT v.*, (SELECT COALESCE(e.odometer_after, e.odometer) FROM entries e
+             WHERE e.vehicle_id = v.id AND e.odometer IS NOT NULL
+             ORDER BY e.date DESC, e.odometer_after IS NULL, e.odometer DESC LIMIT 1) AS last_odometer
            FROM vehicles v ORDER BY archived, created_at`,
         )
         .all();

@@ -36,6 +36,8 @@ export type Entry = {
   title: string | null;
   date: string;
   odometer: number | null;
+  /** Set on the entry where the odometer was replaced: `odometer` is the old unit's last reading. */
+  odometer_after?: number | null;
   total: number;
   labor: number | null;
   shop: string | null;

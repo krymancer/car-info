@@ -123,6 +123,17 @@ describe("api", () => {
     expect(f.fuel_price).toBe(6.199);
   });
 
+  test("odometer swap: stored, and the vehicle shows the new cluster's reading", async () => {
+    const call = setup();
+    const v = (await call("POST", "/vehicles", { name: "Civic" })).json;
+    await call("POST", "/entries", { vehicle_id: v.id, kind: "fuel", date: "2026-01-01", total: 100, odometer: 191_379 });
+    const swap = (await call("POST", "/entries", { vehicle_id: v.id, kind: "service", date: "2026-03-15", odometer: 191_480, odometer_after: "223.930" })).json;
+    expect(swap.odometer_after).toBe(223_930);
+    expect((await call("GET", "/vehicles")).json[0].last_odometer).toBe(223_930);
+    await call("POST", "/entries", { vehicle_id: v.id, kind: "fuel", date: "2026-03-28", total: 100, odometer: 224_029 });
+    expect((await call("GET", "/vehicles")).json[0].last_odometer).toBe(224_029);
+  });
+
   test("password protects the api", async () => {
     const call = setup("hunter2");
     expect((await call("GET", "/vehicles")).status).toBe(401);
