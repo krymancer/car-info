@@ -42,17 +42,37 @@ export const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-/** Parses user-typed numbers in either 1.234,56 or 1,234.56 style. */
-export function parseNum(v: string): number | null {
+/**
+ * Parses user-typed numbers in either 1.234,56 or 1,234.56 style. When both separators appear, the
+ * last one is the decimal point; a separator that repeats ("1.234.567") groups thousands.
+ * `grouped`: a lone separator followed by exactly three digits also groups thousands ("20.100" is
+ * 20100). Use it for amounts that never have three decimals, like a car's price; not for fuel
+ * prices, where 6.199 is a real price per liter.
+ */
+export function parseNum(v: string, { grouped = false } = {}): number | null {
   const t = v.trim().replace(/\s/g, "");
   if (!t) return null;
   const lastComma = t.lastIndexOf(",");
   const lastDot = t.lastIndexOf(".");
   let norm = t;
-  if (lastComma > lastDot) norm = t.replace(/\./g, "").replace(",", ".");
-  else if (lastDot > lastComma && lastComma >= 0) norm = t.replace(/,/g, "");
+  if (lastComma >= 0 && lastDot >= 0) {
+    norm = lastComma > lastDot ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");
+  } else if (lastComma >= 0 || lastDot >= 0) {
+    const sep = lastComma >= 0 ? "," : ".";
+    const repeated = t.indexOf(sep) !== t.lastIndexOf(sep);
+    const thousands = repeated || (grouped && /^-?\d+[.,]\d{3}$/.test(t));
+    norm = thousands ? t.split(sep).join("") : t.replace(",", ".");
+  }
   const n = Number(norm);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Parses whole numbers (odometer, year): dots, commas and spaces are only digit grouping. */
+export function parseWhole(v: string): number | null {
+  const t = v.trim().replace(/[\s.,]/g, "");
+  if (!t) return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? Math.round(n) : null;
 }
 
 const QUICK_FUEL_KEY = "car-info-quick-fuel";

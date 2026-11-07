@@ -57,6 +57,23 @@ export const ENTRY_KINDS = ["fuel", "service", "upgrade", "expense"] as const;
 
 export class BadRequest extends Error {}
 
+/**
+ * Typed numbers in 1.234,56 or 1,234.56 style. Whole-number fields (odometer, year) treat every
+ * separator as digit grouping, so "189.673" is 189673 km rather than 190.
+ */
+function parseNumber(raw: string, whole: boolean): number {
+  const t = raw.trim().replace(/\s/g, "");
+  if (!t) return NaN;
+  if (whole) return Number(t.replace(/[.,]/g, ""));
+  const lastComma = t.lastIndexOf(",");
+  const lastDot = t.lastIndexOf(".");
+  if (lastComma >= 0 && lastDot >= 0) {
+    return Number(lastComma > lastDot ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, ""));
+  }
+  const sep = lastComma >= 0 ? "," : ".";
+  return Number(t.indexOf(sep) !== t.lastIndexOf(sep) ? t.split(sep).join("") : t.replace(",", "."));
+}
+
 function coerce(key: string, type: FieldType, v: unknown): unknown {
   if (v === undefined) return undefined;
   if (v === null || v === "") return null;
@@ -65,7 +82,7 @@ function coerce(key: string, type: FieldType, v: unknown): unknown {
       return String(v).trim() || null;
     case "int":
     case "real": {
-      const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+      const n = typeof v === "number" ? v : parseNumber(String(v), type === "int");
       if (!Number.isFinite(n)) throw new BadRequest(`${key} must be a number`);
       return type === "int" ? Math.round(n) : Math.round(n * 1000) / 1000;
     }

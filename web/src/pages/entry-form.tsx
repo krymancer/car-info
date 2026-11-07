@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { api, type Entry, type Kind } from "@/lib/api";
 import { createEntry } from "@/lib/outbox";
 import { FUEL_TYPES, KINDS, KIND_ORDER } from "@/lib/categories";
-import { km, money, parseNum, today } from "@/lib/format";
+import { km, money, parseNum, parseWhole, today } from "@/lib/format";
 import { useCurrentVehicle, useEntries, useGoBack } from "@/lib/hooks";
 import { currentOdometer } from "@/lib/stats";
 import { cn } from "@/lib/utils";
@@ -145,7 +145,7 @@ export function EntryFormPage() {
         category: kind === "fuel" ? null : category,
         title,
         date,
-        odometer: odometer || null,
+        odometer: parseWhole(odometer),
         total: hasParts ? computedTotal : parseNum(total),
         labor: kind === "service" || kind === "upgrade" ? parseNum(labor) : null,
         shop,

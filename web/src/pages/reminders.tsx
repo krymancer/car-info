@@ -4,7 +4,7 @@ import { AlertTriangle, Bell, BellPlus, CheckCircle2, Clock, Trash2 } from "luci
 import { toast } from "sonner";
 import { api, type Reminder } from "@/lib/api";
 import { CATEGORIES, categoryOf } from "@/lib/categories";
-import { date, km, num, parseNum, today } from "@/lib/format";
+import { date, km, num, parseNum, parseWhole, today } from "@/lib/format";
 import { useCurrentVehicle, useDesktop, useEntries, useReminders } from "@/lib/hooks";
 import { currentOdometer, reminderStatus, type ReminderStatus } from "@/lib/stats";
 import { cn } from "@/lib/utils";
@@ -132,10 +132,10 @@ function ReminderSheet({ vehicleId, reminder, onClose }: { vehicleId: string; re
         vehicle_id: vehicleId,
         title: title || categoryOf("service", category)?.label,
         category: category === "none" ? null : category,
-        interval_km: intervalKm || null,
+        interval_km: parseWhole(intervalKm),
         interval_months: parseNum(intervalMonths),
         last_date: lastDate || null,
-        last_odometer: lastOdo || null,
+        last_odometer: parseWhole(lastOdo),
       };
       return reminder
         ? api(`/reminders/${reminder.id}`, { method: "PATCH", body })

@@ -111,6 +111,18 @@ describe("api", () => {
     expect(e.items[0].name).toBe("LED headlight");
   });
 
+  test("typed numbers: digit grouping in whole fields, both decimal styles", async () => {
+    const call = setup();
+    const v = (await call("POST", "/vehicles", { name: "Civic", year: "2.000", purchase_odometer: "189.673" })).json;
+    expect(v.year).toBe(2000);
+    expect(v.purchase_odometer).toBe(189673);
+    const e = (await call("POST", "/entries", { vehicle_id: v.id, kind: "expense", date: "2026-01-01", total: "1.234,56", odometer: "190,100" })).json;
+    expect(e.total).toBe(1234.56);
+    expect(e.odometer).toBe(190100);
+    const f = (await call("POST", "/entries", { vehicle_id: v.id, kind: "fuel", date: "2026-01-01", total: "100", fuel_price: "6.199" })).json;
+    expect(f.fuel_price).toBe(6.199);
+  });
+
   test("password protects the api", async () => {
     const call = setup("hunter2");
     expect((await call("GET", "/vehicles")).status).toBe(401);

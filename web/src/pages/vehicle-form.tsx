@@ -5,7 +5,7 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api, type Vehicle } from "@/lib/api";
 import { FUEL_TYPES } from "@/lib/categories";
-import { parseNum } from "@/lib/format";
+import { parseNum, parseWhole } from "@/lib/format";
 import { selectVehicle, useGoBack } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 import { FormScreen } from "@/components/shell";
@@ -53,7 +53,9 @@ export function VehicleFormPage() {
     mutationFn: () => {
       const body = {
         ...form,
-        purchase_price: parseNum(form.purchase_price),
+        year: parseWhole(form.year),
+        purchase_price: parseNum(form.purchase_price, { grouped: true }),
+        purchase_odometer: parseWhole(form.purchase_odometer),
         tank_capacity: parseNum(form.tank_capacity),
         type,
         fuel_type: fuelType,
